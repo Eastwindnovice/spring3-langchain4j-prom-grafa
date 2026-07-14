@@ -22,21 +22,47 @@ import java.io.File;
 @RequestMapping("/static")
 public class StaticResourceController {
 
+    // 应用生成根目录（用于预览未部署的代码）
+    private static final String CODE_OUTPUT_ROOT = AppConstant.CODE_OUTPUT_ROOT_DIR;
+    
     // 应用部署根目录（用于访问已部署的应用）
-    private static final String PREVIEW_ROOT_DIR = AppConstant.CODE_DEPLOY_ROOT_DIR;
+    private static final String CODE_DEPLOY_ROOT = AppConstant.CODE_DEPLOY_ROOT_DIR;
 
     /**
-     * 提供静态资源访问，支持目录重定向
+     * 预览未部署的生成代码
+     * 访问格式：http://localhost:8123/api/static/{codeGenType}_{appId}[/{fileName}]
+     */
+    @GetMapping("/{codeGenType}_{appId}/**")
+    public ResponseEntity<Resource> previewGeneratedCode(
+            @PathVariable String codeGenType,
+            @PathVariable Long appId,
+            HttpServletRequest request) {
+        String key = codeGenType + "_" + appId;
+        return serveResource(CODE_OUTPUT_ROOT, key, request);
+    }
+
+    /**
+     * 访问已部署的应用
      * 访问格式：http://localhost:8123/api/static/{deployKey}[/{fileName}]
      */
     @GetMapping("/{deployKey}/**")
-    public ResponseEntity<Resource> serveStaticResource(
+    public ResponseEntity<Resource> serveDeployedApp(
             @PathVariable String deployKey,
             HttpServletRequest request) {
+        return serveResource(CODE_DEPLOY_ROOT, deployKey, request);
+    }
+
+    /**
+     * 共用的资源提供方法
+     */
+    private ResponseEntity<Resource> serveResource(String rootDir, String key, HttpServletRequest request) {
         try {
             // 获取资源路径
             String resourcePath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-            resourcePath = resourcePath.substring(("/static/" + deployKey).length());
+            String pathPrefix = "/static/" + key;
+            if (resourcePath.startsWith(pathPrefix)) {
+                resourcePath = resourcePath.substring(pathPrefix.length());
+            }
             // 如果是目录访问（不带斜杠），重定向到带斜杠的URL
             if (resourcePath.isEmpty()) {
                 HttpHeaders headers = new HttpHeaders();
@@ -48,7 +74,7 @@ public class StaticResourceController {
                 resourcePath = "/index.html";
             }
             // 构建文件路径
-            String filePath = PREVIEW_ROOT_DIR + "/" + deployKey + resourcePath;
+            String filePath = rootDir + File.separator + key + resourcePath;
             File file = new File(filePath);
             // 检查文件是否存在
             if (!file.exists()) {
