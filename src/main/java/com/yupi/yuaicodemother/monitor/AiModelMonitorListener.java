@@ -32,6 +32,9 @@ public class AiModelMonitorListener implements ChatModelListener {
         requestContext.attributes().put(REQUEST_START_TIME_KEY, Instant.now());
         // 从监控上下文中获取信息
         MonitorContext monitorContext = MonitorContextHolder.getContext();
+        if (monitorContext == null) {
+            return;
+        }
         String userId = monitorContext.getUserId();
         String appId = monitorContext.getAppId();
         requestContext.attributes().put(MONITOR_CONTEXT_KEY, monitorContext);
@@ -47,6 +50,9 @@ public class AiModelMonitorListener implements ChatModelListener {
         Map<Object, Object> attributes = responseContext.attributes();
         // 从监控上下文中获取信息
         MonitorContext context = (MonitorContext) attributes.get(MONITOR_CONTEXT_KEY);
+        if (context == null) {
+            return;
+        }
         String userId = context.getUserId();
         String appId = context.getAppId();
         // 获取模型名称
@@ -63,6 +69,9 @@ public class AiModelMonitorListener implements ChatModelListener {
     public void onError(ChatModelErrorContext errorContext) {
         // 从监控上下文中获取信息
         MonitorContext context = MonitorContextHolder.getContext();
+        if (context == null) {
+            return;
+        }
         String userId = context.getUserId();
         String appId = context.getAppId();
         // 获取模型名称和错误类型
