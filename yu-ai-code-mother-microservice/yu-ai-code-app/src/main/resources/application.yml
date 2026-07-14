@@ -30,6 +30,9 @@ server:
     session:
       cookie:
         max-age: 2592000
+# Code Deploy Config
+code:
+  deploy-host: http://localhost:8125/api/static
 # AI
 langchain4j:
   open-ai:
